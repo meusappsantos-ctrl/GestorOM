@@ -195,3 +195,7 @@ export default function App() {
       )}
       {currentView === 'reports' && (isManager || isAdmin) && (
         <Reports tasks={state.tasks} />
+      )}
+    </Layout>
+  );
+}

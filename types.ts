@@ -1,3 +1,4 @@
+
 export enum UserRole {
   MANAGER = 'manager', // Gerente (Acesso Total)
   ADMIN = 'admin',     // Administrador (Gerencia status e cria executantes)
@@ -43,6 +44,7 @@ export interface Task {
   dateExecuted?: string; // ISO Date string
   reasonNotExecuted?: string;
   executedByShift?: Shift;
+  updatedByUserName?: string; // Quem realizou a alteração de status
   additionalData?: Record<string, any>; // Armazena todas as outras colunas do Excel
 }
 

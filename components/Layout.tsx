@@ -29,7 +29,7 @@ export const Layout: React.FC<LayoutProps> = ({ user, tasks, onLogout, currentVi
   // Gerente e Admin podem ver Dashboard e Usuários (com restrições internas)
   const canViewDashboard = isManager || isAdmin; 
   const canViewUsers = isManager || isAdmin;
-  const canViewReports = isManager; // Apenas gerente vê relatórios completos
+  const canViewReports = isManager || isAdmin; // Gerente e Admin podem ver relatórios
 
   // Fechar notificações ao clicar fora
   useEffect(() => {

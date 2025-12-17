@@ -193,9 +193,5 @@ export default function App() {
           onDeleteUser={handleDeleteUser}
         />
       )}
-      {currentView === 'reports' && isManager && (
+      {currentView === 'reports' && (isManager || isAdmin) && (
         <Reports tasks={state.tasks} />
-      )}
-    </Layout>
-  );
-}

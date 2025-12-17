@@ -1,0 +1,5 @@
+{
+  "name": "Gestor de Tarefas OM",
+  "description": "Aplicativo de gestão de tarefas operacionais com controle de turnos, status de execução e relatórios de desempenho.",
+  "requestFramePermissions": []
+}

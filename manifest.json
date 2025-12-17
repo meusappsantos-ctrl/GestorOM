@@ -1,0 +1,21 @@
+{
+  "name": "Gestor de Tarefas OM",
+  "short_name": "Gestor OM",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f9fafb",
+  "theme_color": "#0f172a",
+  "description": "Aplicativo de gestão de tarefas operacionais com controle de turnos.",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/906/906334.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/906/906334.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

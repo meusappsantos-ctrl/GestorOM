@@ -1,7 +1,7 @@
-import { AppState, User, UserRole, Shift, Task, Category, TaskStatus } from '../types';
-import { DEFAULT_PASSWORD_HASH } from '../utils/security';
 
-const STORAGE_KEY = 'gestor_tarefas_db_v4'; // V4 para forçar recriação com hashes
+import { AppState, User, UserRole } from '../types';
+import { DEFAULT_PASSWORD_HASH } from '../utils/security';
+import { getAppState, saveAppState } from './database';
 
 const DEFAULT_MANAGER: User = {
   id: 'manager-1',
@@ -18,34 +18,31 @@ const INITIAL_DATA: AppState = {
   currentUser: null
 };
 
-export const loadState = (): AppState => {
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (!stored) return INITIAL_DATA;
+export const loadState = async (): Promise<AppState> => {
   try {
-    const parsed = JSON.parse(stored);
-    
-    // Verificação de integridade básica
-    if (!parsed.users || !Array.isArray(parsed.users)) {
-        return INITIAL_DATA;
+    const stored = await getAppState();
+    if (!stored) {
+      // Se não houver dados, salva o estado inicial (com o gerente padrão)
+      await saveAppState(INITIAL_DATA);
+      return INITIAL_DATA;
     }
 
     // Garante que o gerente padrão exista
-    if (!parsed.users.find((u: User) => u.role === UserRole.MANAGER)) {
-      parsed.users.push(DEFAULT_MANAGER);
+    if (!stored.users.find((u: User) => u.role === UserRole.MANAGER)) {
+      stored.users.push(DEFAULT_MANAGER);
     }
     
-    return { ...INITIAL_DATA, ...parsed, currentUser: null }; // Reset session on reload
+    return { ...INITIAL_DATA, ...stored, currentUser: null };
   } catch (e) {
+    console.error("Erro ao carregar banco de dados:", e);
     return INITIAL_DATA;
   }
 };
 
-export const saveState = (state: AppState) => {
-  // Removemos currentUser do salvamento para não persistir sessão se não necessário
-  const stateToSave = {
-    users: state.users,
-    categories: state.categories,
-    tasks: state.tasks
-  };
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
+export const saveState = async (state: AppState) => {
+  try {
+    await saveAppState(state);
+  } catch (e) {
+    console.error("Erro ao salvar no banco de dados:", e);
+  }
 };

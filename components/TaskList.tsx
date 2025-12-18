@@ -3,10 +3,10 @@ import React, { useState } from 'react';
 import { Task, Category, TaskStatus, User, Shift, UserRole } from '../types';
 import { Button } from './Button';
 import { 
-  Upload, AlertCircle, CheckCircle, Clock, FileSpreadsheet, X, Plus, Layers, 
-  Trash2, Info, AlertTriangle, Briefcase, CalendarCheck, ListTodo, History, 
-  Calendar, Hash, Tag, ArrowRight, Ban, Timer, AlertOctagon, Eye, AlignLeft, ShieldAlert,
-  ArrowLeftRight, MapPin, Database, Search, Eraser, ClipboardList, ChevronDown, UserCheck
+  Upload, CheckCircle, X, Plus, Layers, 
+  Trash2, Info, AlertTriangle, Briefcase, 
+  ListTodo, Tag, Ban, Timer, AlertOctagon, Eye, UserCheck, 
+  Search, Eraser, ClipboardList, ChevronDown, FileSpreadsheet
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
@@ -33,39 +33,40 @@ interface TaskCardProps {
   onViewDetails: (task: Task) => void;
 }
 
-const getDeadlineStatus = (dateMaxStr: string) => {
-  if (!dateMaxStr) return 'normal';
+const getDeadlineInfo = (dateMaxStr: string) => {
+  if (!dateMaxStr) return { status: 'normal', days: 0 };
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const [y, m, d] = dateMaxStr.split('-').map(Number);
   const maxDate = new Date(y, m - 1, d);
   const diffTime = maxDate.getTime() - today.getTime();
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  if (diffDays < 0) return 'expired';
-  if (diffDays <= 3) return 'urgent';
-  return 'normal';
+  
+  if (diffDays < 0) return { status: 'expired', days: Math.abs(diffDays) };
+  if (diffDays <= 2) return { status: 'urgent', days: diffDays };
+  return { status: 'normal', days: diffDays };
 };
 
 const PendingTaskCard: React.FC<TaskCardProps> = ({ task, categories, canManageStatus, canDelete, onStatusChange, onDelete, onViewDetails }) => {
-  const deadlineStatus = getDeadlineStatus(task.dateMax);
+  const deadline = getDeadlineInfo(task.dateMax);
   let cardStyle = "border-slate-200 hover:border-blue-200 hover:shadow-md";
   let stripeColor = "bg-blue-500 group-hover:w-1.5";
   let DeadlineBadge = null;
 
-  if (deadlineStatus === 'expired') {
-    cardStyle = "border-red-300 bg-red-50/40 hover:border-red-500 hover:shadow-red-100";
-    stripeColor = "bg-red-500 w-1.5";
+  if (deadline.status === 'expired') {
+    cardStyle = "border-red-400 bg-red-50 hover:border-red-600 hover:shadow-red-200 ring-1 ring-red-100";
+    stripeColor = "bg-red-600 w-2";
     DeadlineBadge = (
-      <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-red-700 bg-red-100 px-2 py-0.5 rounded border border-red-200 animate-pulse">
-        <AlertOctagon size={12} /> Fora do Prazo
+      <span className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-white bg-red-600 px-2.5 py-1 rounded-md border border-red-700 animate-pulse shadow-sm">
+        <AlertOctagon size={14} /> ATRASADA ({deadline.days}d)
       </span>
     );
-  } else if (deadlineStatus === 'urgent') {
-    cardStyle = "border-orange-300 bg-orange-50/40 hover:border-orange-500 hover:shadow-orange-100";
-    stripeColor = "bg-orange-500 w-1.5";
+  } else if (deadline.status === 'urgent') {
+    cardStyle = "border-amber-400 bg-amber-50/60 hover:border-amber-600 hover:shadow-amber-200 ring-1 ring-amber-100";
+    stripeColor = "bg-amber-600 w-2";
     DeadlineBadge = (
-      <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-orange-700 bg-orange-100 px-2 py-0.5 rounded border border-orange-200">
-        <Timer size={12} /> Prazo Próximo
+      <span className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-amber-900 bg-amber-200 px-2.5 py-1 rounded-md border border-amber-400 shadow-sm">
+        <Timer size={14} /> VENCE EM {deadline.days === 0 ? 'HOJE' : `${deadline.days}d`}
       </span>
     );
   }
@@ -75,7 +76,7 @@ const PendingTaskCard: React.FC<TaskCardProps> = ({ task, categories, canManageS
       onClick={() => onViewDetails(task)}
       className={`group relative bg-white rounded-xl p-4 shadow-sm border transition-all duration-300 animate-fade-in overflow-hidden cursor-pointer ${cardStyle}`}
     >
-      <div className={`absolute left-0 top-0 bottom-0 w-1 transition-all ${stripeColor}`}></div>
+      <div className={`absolute left-0 top-0 bottom-0 transition-all ${stripeColor}`}></div>
       <div className="pl-3 flex flex-col md:flex-row gap-4 justify-between items-start">
         <div className="flex-1 space-y-2 w-full">
           <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -100,14 +101,14 @@ const PendingTaskCard: React.FC<TaskCardProps> = ({ task, categories, canManageS
               <button 
                 type="button"
                 onClick={() => onStatusChange(task, TaskStatus.EXECUTED)}
-                className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium py-2 px-3 rounded-lg transition-colors shadow-sm active:transform active:scale-95"
+                className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium py-2.5 px-3 rounded-lg transition-colors shadow-sm active:transform active:scale-95"
               >
                 <CheckCircle size={16} /> Executado
               </button>
               <button 
                 type="button"
                 onClick={() => onStatusChange(task, TaskStatus.NOT_EXECUTED)}
-                className="w-full flex items-center justify-center gap-2 bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 text-sm font-medium py-2 px-3 rounded-lg transition-colors"
+                className="w-full flex items-center justify-center gap-2 bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 text-sm font-medium py-2.5 px-3 rounded-lg transition-colors"
               >
                 <Ban size={16} /> Não Executado
               </button>
@@ -134,70 +135,9 @@ const PendingTaskCard: React.FC<TaskCardProps> = ({ task, categories, canManageS
   );
 };
 
-const CompletedTaskCard: React.FC<TaskCardProps> = ({ task, categories, canManageStatus, canDelete, onStatusChange, onDelete, onViewDetails }) => {
-  const isExecuted = task.status === TaskStatus.EXECUTED;
-  return (
-    <div 
-      onClick={() => onViewDetails(task)}
-      className={`relative rounded-xl p-4 border transition-all duration-300 cursor-pointer ${
-      isExecuted ? 'bg-gradient-to-br from-white to-emerald-50/30 border-emerald-100 shadow-sm hover:shadow-md' : 'bg-gradient-to-br from-white to-rose-50/30 border-rose-100 shadow-sm hover:shadow-md'
-    }`}>
-      <div className="absolute top-4 right-4">
-        {isExecuted ? (
-          <span className="flex items-center gap-1 text-[10px] uppercase font-black tracking-wider text-emerald-600 bg-emerald-100/50 px-2 py-1 rounded-full border border-emerald-100">
-            <CheckCircle size={12} className="fill-current" /> Executado
-          </span>
-        ) : (
-          <span className="flex items-center gap-1 text-[10px] uppercase font-black tracking-wider text-rose-600 bg-rose-100/50 px-2 py-1 rounded-full border border-rose-100">
-            <AlertTriangle size={12} className="fill-current" /> Não Realizado
-          </span>
-        )}
-      </div>
-      <div className="pr-24 mb-2"> 
-         <div className="flex items-center gap-2 mb-2">
-            <span className="text-xs font-mono text-slate-500 font-bold">OM {task.omNumber}</span>
-         </div>
-         <h3 className={`text-base font-bold ${isExecuted ? 'text-slate-800' : 'text-slate-700'}`}>
-            {task.description}
-         </h3>
-         <div className="flex items-center gap-1 mt-1 text-xs font-medium text-slate-500">
-            <Briefcase size={12} /> {task.workCenter || 'N/A'}
-         </div>
-      </div>
-      <div className="mt-4 flex flex-col md:flex-row gap-3 items-start md:items-center justify-between text-sm">
-        <div className="flex flex-wrap gap-2">
-            <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium ${
-                isExecuted ? 'bg-emerald-50 text-emerald-800 border-emerald-100' : 'bg-rose-50 text-rose-800 border-rose-100'
-            }`}>
-                <Briefcase size={14} /> Turno {task.executedByShift}
-            </div>
-            {task.updatedByUserName && (
-                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border bg-slate-50 text-slate-600 border-slate-200 text-xs font-medium">
-                    <UserCheck size={14} /> {task.updatedByUserName}
-                </div>
-            )}
-        </div>
-        {canManageStatus && (
-            <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
-                 <button type="button" onClick={() => onStatusChange(task, TaskStatus.PENDING)} className="text-xs text-blue-600 hover:text-blue-800 font-medium hover:underline flex items-center gap-1">
-                    <History size={12}/> Resetar
-                </button>
-                 {canDelete && (
-                    <button type="button" onClick={() => onDelete(task.id)} className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 font-medium border border-transparent hover:border-red-200 px-2 py-1 rounded transition-colors" title="Excluir Tarefa">
-                        <Trash2 size={14}/> Excluir
-                    </button>
-                 )}
-            </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
 export const TaskList: React.FC<TaskListProps> = ({ user, tasks, categories, onUpdateTask, onAddTask, onAddTasks, onDeleteTask, onClearAllTasks, onAddCategory, onDeleteCategory }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedWorkCenter, setSelectedWorkCenter] = useState<string>('all');
-  const [activeTab, setActiveTab] = useState<'pending' | 'completed'>('pending');
   const [newCategoryName, setNewCategoryName] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -209,9 +149,9 @@ export const TaskList: React.FC<TaskListProps> = ({ user, tasks, categories, onU
   const [reasonText, setReasonText] = useState('');
   const [selectedShift, setSelectedShift] = useState<Shift>(Shift.A);
   const [showImport, setShowImport] = useState(false);
+  
   const isManager = user.role === UserRole.MANAGER;
   const isAdmin = user.role === UserRole.ADMIN;
-  const isExecutor = user.role === UserRole.EXECUTOR;
   const canManageStatus = isManager || isAdmin;
   const canEditStructure = isManager;
   const canDelete = isManager;
@@ -223,6 +163,9 @@ export const TaskList: React.FC<TaskListProps> = ({ user, tasks, categories, onU
   }, [tasks]);
 
   const filteredTasks = tasks.filter(t => {
+    // Filtro principal: Apenas Pendentes conforme solicitado
+    if (t.status !== TaskStatus.PENDING) return false;
+    
     const matchesCategory = selectedCategory === 'all' || t.categoryId === selectedCategory;
     const matchesWorkCenter = selectedWorkCenter === 'all' || t.workCenter === selectedWorkCenter;
     const lowerQuery = searchQuery.toLowerCase();
@@ -230,8 +173,6 @@ export const TaskList: React.FC<TaskListProps> = ({ user, tasks, categories, onU
     return matchesCategory && matchesWorkCenter && matchesSearch;
   });
 
-  const pendingTasks = filteredTasks.filter(t => t.status === TaskStatus.PENDING);
-  const completedTasks = filteredTasks.filter(t => t.status !== TaskStatus.PENDING);
   const currentCategoryName = categories.find(c => c.id === selectedCategory)?.name;
 
   const handleStatusChange = (task: Task, newStatus: TaskStatus) => {
@@ -242,15 +183,6 @@ export const TaskList: React.FC<TaskListProps> = ({ user, tasks, categories, onU
     } else if (newStatus === TaskStatus.EXECUTED) {
       setSelectedShift(user.shift || Shift.A);
       setShowShiftModal(task.id);
-    } else {
-      onUpdateTask({
-        ...task,
-        status: newStatus,
-        dateExecuted: undefined,
-        reasonNotExecuted: undefined,
-        executedByShift: undefined,
-        updatedByUserName: user.name // Registra quem resetou
-      });
     }
   };
 
@@ -264,7 +196,7 @@ export const TaskList: React.FC<TaskListProps> = ({ user, tasks, categories, onU
         reasonNotExecuted: reasonText,
         dateExecuted: new Date().toISOString(),
         executedByShift: selectedShift,
-        updatedByUserName: user.name // CAPTURA NOME DO ADMIN/GERENTE
+        updatedByUserName: user.name
       });
     }
     setShowReasonModal(null);
@@ -279,7 +211,7 @@ export const TaskList: React.FC<TaskListProps> = ({ user, tasks, categories, onU
         status: TaskStatus.EXECUTED,
         dateExecuted: new Date().toISOString(),
         executedByShift: selectedShift,
-        updatedByUserName: user.name // CAPTURA NOME DO ADMIN/GERENTE
+        updatedByUserName: user.name
       });
     }
     setShowShiftModal(null);
@@ -313,9 +245,9 @@ export const TaskList: React.FC<TaskListProps> = ({ user, tasks, categories, onU
   const processImportData = (data: any[]) => {
     const tasksToAdd: Task[] = [];
     const duplicates: Task[] = [];
-    const importErrors: string[] = [];
     const normalizeKey = (k: string) => k ? k.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "") : '';
     const isSpecificCategory = selectedCategory !== 'all';
+    
     data.forEach((row: any, index: number) => {
       const keys = Object.keys(row);
       const omKey = keys.find(k => { const n = normalizeKey(k); return n === 'nom' || n === 'om' || n === 'numeroom' || n === 'numero'; });
@@ -324,10 +256,12 @@ export const TaskList: React.FC<TaskListProps> = ({ user, tasks, categories, onU
       const minKey = keys.find(k => { const n = normalizeKey(k); return n === 'toleranciaminima' || n === 'tolmin' || n === 'dataminima' || n.includes('datainicio') || n === 'inicio'; });
       const maxKey = keys.find(k => { const n = normalizeKey(k); return n === 'toleranciamaxima' || n === 'tolmax' || n === 'datamaxima' || n.includes('datafim') || n === 'fim' || n === 'prazo'; });
       const catKey = keys.find(k => normalizeKey(k).includes('cat') || normalizeKey(k) === 'categoria'); 
+      
       if (!omKey || !descKey) return; 
       const om = String(row[omKey]);
       const desc = String(row[descKey]);
       const wc = wcKey ? String(row[wcKey]) : '';
+      
       const formatDate = (val: any) => {
          if (!val) return ''; 
          if (typeof val === 'number') {
@@ -350,12 +284,10 @@ export const TaskList: React.FC<TaskListProps> = ({ user, tasks, categories, onU
          }
          return ''; 
       };
-      const rawMin = minKey ? row[minKey] : null;
-      const rawMax = maxKey ? row[maxKey] : null;
-      const min = rawMin ? formatDate(rawMin) : '';
-      const max = rawMax ? formatDate(rawMax) : '';
-      if (rawMin && !min) importErrors.push(`Linha ${index + 2}: Data Mínima inválida para OM ${om}.`);
-      if (rawMax && !max) importErrors.push(`Linha ${index + 2}: Data Máxima inválida para OM ${om}.`);
+
+      const min = minKey ? formatDate(row[minKey]) : '';
+      const max = maxKey ? formatDate(row[maxKey]) : '';
+      
       let catId = categories[0]?.id || 'default';
       if (isSpecificCategory) catId = selectedCategory;
       else if (catKey) {
@@ -365,13 +297,15 @@ export const TaskList: React.FC<TaskListProps> = ({ user, tasks, categories, onU
           if (foundCat) catId = foundCat.id;
         }
       }
+
       const additionalData: Record<string, any> = {};
       keys.forEach(key => { if (![omKey, descKey, wcKey, minKey, maxKey, catKey].includes(key)) additionalData[key] = row[key]; });
+      
       const existingTask = tasks.find(t => t.omNumber === om && t.categoryId === catId);
-      if (existingTask) duplicates.push({ ...existingTask, description: desc, workCenter: wc, dateMin: min, dateMax: max, additionalData: additionalData, status: TaskStatus.PENDING, dateExecuted: undefined, executedByShift: undefined, reasonNotExecuted: undefined, updatedByUserName: undefined });
+      if (existingTask) duplicates.push({ ...existingTask, description: desc, workCenter: wc, dateMin: min, dateMax: max, additionalData: additionalData, status: TaskStatus.PENDING });
       else tasksToAdd.push({ id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, omNumber: om, description: desc, workCenter: wc, dateMin: min, dateMax: max, categoryId: catId, status: TaskStatus.PENDING, additionalData: additionalData });
     });
-    if (importErrors.length > 0) alert(`AVISO: Problemas de data em ${importErrors.length} linhas.`);
+
     if (tasksToAdd.length > 0) onAddTasks(tasksToAdd);
     if (duplicates.length > 0) {
         if (window.confirm(`Substituir ${duplicates.length} tarefas duplicadas?`)) duplicates.forEach(task => onUpdateTask(task));
@@ -398,15 +332,15 @@ export const TaskList: React.FC<TaskListProps> = ({ user, tasks, categories, onU
     <div className="space-y-4 md:space-y-6 pb-20 md:pb-0">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-4">
         <div>
-          <h2 className="text-xl md:text-2xl font-bold text-slate-800">Tarefas</h2>
-          <p className="text-slate-500 text-xs md:text-sm">Gerencie e execute as OMs programadas.</p>
+          <h2 className="text-xl md:text-2xl font-bold text-slate-800">Lista de Tarefas Pendentes</h2>
+          <p className="text-slate-500 text-xs md:text-sm">Acompanhamento e execução de OMs abertas.</p>
         </div>
       </div>
 
       {isAdmin && (
         <div className="bg-blue-50 border-l-4 border-blue-400 p-3 flex items-start">
             <Info className="text-blue-600 mr-2 shrink-0" size={16} />
-            <p className="text-xs text-blue-700">Modo Administrador: Gerencie execuções.</p>
+            <p className="text-xs text-blue-700">Modo Administrador: Registro de execuções ativado.</p>
         </div>
       )}
       
@@ -459,7 +393,7 @@ export const TaskList: React.FC<TaskListProps> = ({ user, tasks, categories, onU
       {showImport && canEditStructure && (
         <div className="bg-white p-4 md:p-6 rounded-lg shadow-lg border border-slate-200 relative animate-fade-in mb-6">
            <button type="button" onClick={() => setShowImport(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><X size={20} /></button>
-           <h3 className="font-bold text-lg mb-2 flex items-center"><FileSpreadsheet className="mr-2 text-green-600"/> Importar Tarefas</h3>
+           <h3 className="font-bold text-lg mb-2 flex items-center"><FileSpreadsheet className="mr-2 text-green-600"/> Importar Dados Operacionais</h3>
            <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 md:p-8 text-center bg-slate-50">
              <input type="file" accept=".xlsx, .xls, .csv" onChange={handleFileUpload} className="hidden" id="file-upload"/>
              <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center"><Upload size={28} className="text-slate-400 mb-2" /><span className="text-sm font-medium text-slate-700">Selecione o arquivo Excel</span></label>
@@ -467,22 +401,20 @@ export const TaskList: React.FC<TaskListProps> = ({ user, tasks, categories, onU
         </div>
       )}
 
-      <div className="flex items-center w-full border-b border-slate-200 mb-4 bg-white rounded-t-lg shadow-sm">
-        <button type="button" onClick={() => setActiveTab('pending')} className={`flex-1 flex items-center justify-center py-3 font-medium text-sm border-b-2 ${activeTab === 'pending' ? 'border-blue-600 text-blue-600 bg-blue-50/30' : 'border-transparent text-slate-500'}`}>Pendentes ({pendingTasks.length})</button>
-        <button type="button" onClick={() => setActiveTab('completed')} className={`flex-1 flex items-center justify-center py-3 font-medium text-sm border-b-2 ${activeTab === 'completed' ? 'border-green-600 text-green-600 bg-green-50/30' : 'border-transparent text-slate-500'}`}>Histórico ({completedTasks.length})</button>
-      </div>
-
       <div className="space-y-3 md:space-y-4 min-h-[300px]">
-        {(activeTab === 'pending' ? pendingTasks : completedTasks).map(task => (
-            activeTab === 'pending' ? (
-                <PendingTaskCard key={task.id} task={task} categories={categories} canManageStatus={canManageStatus} canDelete={canDelete} onStatusChange={handleStatusChange} onDelete={handleDeleteClick} onViewDetails={setSelectedTask}/>
-            ) : (
-                <CompletedTaskCard key={task.id} task={task} categories={categories} canManageStatus={canManageStatus} canDelete={canDelete} onStatusChange={handleStatusChange} onDelete={handleDeleteClick} onViewDetails={setSelectedTask}/>
-            )
+        {filteredTasks.map(task => (
+            <PendingTaskCard key={task.id} task={task} categories={categories} canManageStatus={canManageStatus} canDelete={canDelete} onStatusChange={handleStatusChange} onDelete={handleDeleteClick} onViewDetails={setSelectedTask}/>
         ))}
+        {filteredTasks.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-dashed border-slate-300 shadow-sm animate-fade-in">
+             <ListTodo size={48} className="text-slate-200 mb-3" />
+             <p className="text-slate-500 font-bold text-lg uppercase tracking-widest">Sem OMs Pendentes</p>
+             <p className="text-slate-400 text-sm">Todas as atividades deste filtro foram concluídas ou não existem.</p>
+          </div>
+        )}
       </div>
 
-      {/* Detalhes da Tarefa com Auditoria */}
+      {/* Detalhes da Tarefa */}
       {selectedTask && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in backdrop-blur-sm" onClick={() => setSelectedTask(null)}>
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
@@ -490,9 +422,7 @@ export const TaskList: React.FC<TaskListProps> = ({ user, tasks, categories, onU
                 <div>
                    <div className="flex items-center gap-2 mb-2">
                       <span className="bg-slate-700 text-slate-200 px-2 py-0.5 rounded text-xs font-bold font-mono">OM {selectedTask.omNumber}</span>
-                      <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase ${selectedTask.status === TaskStatus.EXECUTED ? 'bg-green-500 text-white' : selectedTask.status === TaskStatus.NOT_EXECUTED ? 'bg-red-500 text-white' : 'bg-blue-500 text-white'}`}>
-                         {selectedTask.status === TaskStatus.EXECUTED ? 'Executado' : selectedTask.status === TaskStatus.NOT_EXECUTED ? 'Não Executado' : 'Pendente'}
-                      </span>
+                      <span className="px-2 py-0.5 rounded text-xs font-bold uppercase bg-blue-500 text-white">Pendente</span>
                    </div>
                    <h2 className="text-lg font-bold text-white leading-tight">{selectedTask.description}</h2>
                 </div>
@@ -511,37 +441,11 @@ export const TaskList: React.FC<TaskListProps> = ({ user, tasks, categories, onU
                 </div>
 
                 <div className="bg-slate-50 rounded-lg p-4 border border-slate-200 space-y-4">
-                   <h4 className="text-sm font-bold text-slate-700 flex items-center gap-2 border-b border-slate-200 pb-2"><ClipboardList size={16} className="text-blue-600"/> Dados de Auditoria</h4>
-                   
-                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                      <div>
-                         <span className="text-slate-500 text-xs block font-bold uppercase mb-1">Responsável pela Alteração</span>
-                         <span className={`font-bold text-base flex items-center gap-2 ${selectedTask.updatedByUserName ? 'text-blue-700' : 'text-slate-400 italic'}`}>
-                            {selectedTask.updatedByUserName ? (
-                                <>
-                                    <UserCheck size={18} />
-                                    {selectedTask.updatedByUserName}
-                                </>
-                            ) : 'Aguardando ação'}
-                         </span>
-                      </div>
-                      <div>
-                         <span className="text-slate-500 text-xs block font-bold uppercase mb-1">Turno de Execução</span>
-                         <span className={`font-medium text-base ${selectedTask.executedByShift ? 'text-slate-800' : 'text-slate-400'}`}>{selectedTask.executedByShift || '-'}</span>
-                      </div>
+                   <h4 className="text-sm font-bold text-slate-700 flex items-center gap-2 border-b border-slate-200 pb-2"><ClipboardList size={16} className="text-blue-600"/> Prazos Planejados</h4>
+                   <div className="grid grid-cols-2 gap-4 text-xs font-bold">
+                      <div className="text-slate-600 uppercase">Data Início: <span className="text-slate-800 ml-1">{selectedTask.dateMin || '-'}</span></div>
+                      <div className="text-slate-600 uppercase">Prazo Máximo: <span className="text-red-600 ml-1">{selectedTask.dateMax || '-'}</span></div>
                    </div>
-
-                   <div>
-                      <span className="text-slate-500 text-xs block font-bold uppercase mb-1">Data/Hora do Registro</span>
-                      <span className="block font-medium text-slate-800">{selectedTask.dateExecuted ? new Date(selectedTask.dateExecuted).toLocaleString('pt-BR') : '-'}</span>
-                   </div>
-
-                   {selectedTask.status === TaskStatus.NOT_EXECUTED && (
-                      <div>
-                         <span className="text-slate-500 text-xs block font-bold uppercase mb-1">Motivo / Observação</span>
-                         <p className="font-medium p-3 rounded border text-sm bg-red-50 text-slate-800 border-red-100">{selectedTask.reasonNotExecuted}</p>
-                      </div>
-                   )}
                 </div>
              </div>
              <div className="bg-slate-50 p-4 border-t border-slate-200 flex justify-end shrink-0"><Button type="button" onClick={() => setSelectedTask(null)}>Fechar</Button></div>
@@ -549,7 +453,7 @@ export const TaskList: React.FC<TaskListProps> = ({ user, tasks, categories, onU
         </div>
       )}
 
-      {/* Outros Modais (Reason, Shift, Delete, Clear) mantidos com a lógica de updatedByUserName */}
+      {/* Modal Motivo */}
       {showReasonModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in backdrop-blur-sm">
           <div className="bg-white rounded-lg p-5 w-[95%] max-w-md shadow-2xl">
@@ -572,6 +476,7 @@ export const TaskList: React.FC<TaskListProps> = ({ user, tasks, categories, onU
         </div>
       )}
 
+      {/* Modal Turno Execução */}
       {showShiftModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in backdrop-blur-sm">
             <div className="bg-white rounded-lg p-5 w-[95%] max-w-sm shadow-2xl">
